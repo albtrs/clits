@@ -16,12 +16,18 @@ export interface SeparatedArgs {
 
 export interface Command {
   options?: Option[];
-  action: (params: any) => void;
+  action: (params: ParsedArgs) => Chain;
 }
 
-export interface SubCommand extends Command {
+export interface Chain {
+  [key: string]: string
+}
+
+export interface SubCommand {
   name: string;
   alias?: string;
+  options?: Option[];
+  action: (params: ParsedArgs, chain: Chain) => void;
 }
 
 export interface CommandRoute {

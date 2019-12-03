@@ -1,5 +1,5 @@
 import { separateArgs, parseArgs } from './parse'
-import { Command, SubCommand, CommandRoute, Option, ParsedArgs, SeparatedArgs } from './types'
+import { Command, Chain, SubCommand, CommandRoute, Option, ParsedArgs, SeparatedArgs } from './types'
 import { errorExit, ArgError } from './errors'
 
 function findSubCommand (commands: SubCommand[], name: string): SubCommand {
@@ -8,7 +8,7 @@ function findSubCommand (commands: SubCommand[], name: string): SubCommand {
   return response;
 }
 
-export function makeCommand (route: CommandRoute) {
+export default function makeCommand (route: CommandRoute) {
   return (args: string[]) => {
     try {
       if (route.subs) {
@@ -20,8 +20,9 @@ export function makeCommand (route: CommandRoute) {
           const subCommand = findSubCommand(route.subs, subCommandName);
           const subOptions = subCommand.options || []
           const parsedSub = parseArgs(separated.sub, subOptions);
-          route.root.action(parsedRoot);
-          subCommand.action(parsedSub);
+          const parentObj = route.root.action(parsedRoot);
+          subCommand.action(parsedSub, parentObj);
+
         } else {
           route.root.action(parsedRoot);
         }
@@ -32,7 +33,11 @@ export function makeCommand (route: CommandRoute) {
         route.root.action(parsedRoot);
       }
     } catch (e) {
-      errorExit(e);
+      if (e instanceof ArgError) {
+        errorExit(e);
+      } else {
+        console.error(e);
+      }
     }
   }
 }
